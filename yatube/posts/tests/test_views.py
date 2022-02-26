@@ -75,7 +75,7 @@ class UserViewTest(TestCase):
             with self.subTest(obj=obj):
                 self.assertEqual(test_obj, obj)
         self.assertIn(
-           UserViewTest.post, response.context.get('page_obj').object_list
+            UserViewTest.post, response.context.get('page_obj').object_list
         )
 
     def test_group_list_page_correct_context(self):

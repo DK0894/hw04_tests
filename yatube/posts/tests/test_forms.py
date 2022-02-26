@@ -66,7 +66,7 @@ class UserFormCreateTest(TestCase):
         # Проверяем, сработал ли редирект
         self.assertRedirects(response, reverse(
             'posts:profile', args={self.user.username})
-                             )
+                            )
         # Проверяем, увеличелось ли число постов
         self.assertEqual(Post.objects.count(), post_count + 1)
         print(post_count)
@@ -92,5 +92,5 @@ class UserFormCreateTest(TestCase):
         )
         self.assertRedirects(response, reverse(
             'posts:post_detail', args={post_1.id})
-                             )
+                            )
         self.assertEqual(Post.objects.get(id=post_1.id).text, 'new_text_post')
