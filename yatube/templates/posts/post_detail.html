@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}
+    {{ post.text|truncatechars:30 }}
+{% endblock %}
+{% block content %}
+      <div class="row">
+        <aside class="col-12 col-md-3">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              Дата публикации: {{ post.pub_date|date:"d E Y" }}
+            </li>
+            <!-- если у поста есть группа -->
+            {% if post.group.slug %}
+              <li class="list-group-item">
+                Группа: {{ post.group.title }}
+                <a href="{% url 'posts:group_list' post.group.slug %}">
+                  все записи группы
+                </a>
+              </li>
+            {% endif %}
+              <li class="list-group-item">
+                Автор: <a href="{% url 'posts:profile' post.author %}">
+                  {{ post.author.get_full_name|default:post.author }}</a>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+              Всего постов автора: <span>{{ post.author.posts.count }}</span>
+            </li>
+            <li class="list-group-item">
+              <a href="{% url 'posts:profile' post.author %}">
+                все посты пользователя
+              </a>
+            </li>
+          {% if post.author == request.user %}
+            <li class="list-group-item">
+              <a href="{% url 'posts:post_edit' post.pk %}">
+                Редактировать пост
+              </a>
+            </li>
+          {% endif %}
+          </ul>
+        </aside>
+        <article class="col-12 col-md-9">
+          <p>
+
+           {% include 'includes/post_text.html' %}
+
+          </p>
+        </article>
+      </div>
+
+{% endblock %}
