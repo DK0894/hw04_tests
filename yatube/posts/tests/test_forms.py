@@ -17,12 +17,6 @@ class UserFormCreateTest(TestCase):
             slug='test_slug',
             description='test_description',
         )
-        # cls.post = Post.objects.create(
-        #     author=User.objects.create_user(username='auth'),
-        #     text='test_text',
-        #     group=UserFormCreateTest.group,
-        # )
-        # cls.form = PostForm()
         cls.test_user = User.objects.create_user(
             username='Test_username')
         cls.post = Post.objects.create(
@@ -44,23 +38,14 @@ class UserFormCreateTest(TestCase):
         создаётся новая запись в базе данных.
         """
         post_count = Post.objects.count()
-        valid_form_data = {
+        form_data = {
             'text': self.post.text,
-            UserFormCreateTest.group.id: self.post.group.title,
+            self.group.id: self.post.group.title,
         }
-        invalid_form_data = {
-            'text': None,
-            UserFormCreateTest.group.id: self.post.group.title,
-        }
-        # Проверяем форму на валидность
-        valid_form = PostForm(data=valid_form_data)
-        invalid_form = PostForm(data=invalid_form_data)
-        self.assertTrue(valid_form.is_valid())
-        self.assertFalse(invalid_form.is_valid())
         # Отправляем POST-запрос
         response = self.authorized_client.post(
             reverse('posts:post_create'),
-            data=valid_form_data,
+            data=form_data,
             follow=True,
         )
         # Проверяем, сработал ли редирект
@@ -73,10 +58,25 @@ class UserFormCreateTest(TestCase):
         # Проверяем, что создалась запись в нужной группе
         self.assertTrue(
             Post.objects.filter(
-                text='test_text',
+                text=form_data['text'],
                 group=UserFormCreateTest.group,
             ).exists()
         )
+
+    def test_valid_form(self):
+        """Проверка работы валидатора."""
+        valid_form_data = {
+            'text': self.post.text,
+            self.group.id: self.post.group.title,
+        }
+        invalid_form_data = {
+            'text': None,
+            self.group.id: self.post.group.title,
+        }
+        valid_form = PostForm(data=valid_form_data)
+        invalid_form = PostForm(data=invalid_form_data)
+        self.assertTrue(valid_form.is_valid())
+        self.assertFalse(invalid_form.is_valid())
 
     def test_edit_post(self):
         """При отправке валидной формы со страницы редактирования поста

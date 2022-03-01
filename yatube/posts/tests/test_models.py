@@ -19,23 +19,26 @@ class UserModelTest(TestCase):
         cls.test_user = User.objects.create_user(
             username='Test_username')
         cls.post = Post.objects.create(
-            text='test_text',
+            text='test_text_text_text_text_text',
             author=User.objects.get(username='Test_username'),
             group=UserModelTest.group
         )
 
-    def test_models_correct_object_names(self):
+    def test_models_correct_object_names_post(self):
+        """Проверяем, что у моделей корректно работает __str__."""
+        post = self.post
+        expected_object_name = post.text
+        self.assertEqual(expected_object_name, str(post))
+
+    def test_models_correct_object_names_group(self):
         """Проверяем, что у моделей корректно работает __str__."""
         group = UserModelTest.group
-        post = UserModelTest.post
-        expected_object_name_1 = group.title
-        expected_object_name_2 = post.text
-        self.assertEqual(expected_object_name_1, str(group))
-        self.assertEqual(expected_object_name_2, str(post))
+        expected_object_name = group.title
+        self.assertEqual(expected_object_name, str(group))
 
     def test_verbose_name(self):
         """verbose_name в полях совпадает с ожидаемым."""
-        post = UserModelTest.post
+        post = self.post
         field_verboses = {
             'text': 'Текст поста',
             'pub_date': 'Дата публикации',
@@ -50,7 +53,7 @@ class UserModelTest(TestCase):
 
     def test_help_text(self):
         """help_text в полях совпадает с ожидаемым."""
-        post = UserModelTest.post
+        post = self.post
         field_help_text = {
             'text': 'Введите текст поста',
             'group': 'Группа, к которой будет относиться пост',

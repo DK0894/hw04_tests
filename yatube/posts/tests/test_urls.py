@@ -64,7 +64,7 @@ class UserURLTest(TestCase):
         url_path = {
             '/create/': '/auth/login/?next=/create/',
             f'/posts/{post.pk}/edit/':
-                f'/auth/login/?next=/posts/{post.pk}/edit/',
+            f'/auth/login/?next=/posts/{post.pk}/edit/',
         }
         for url, redirect in url_path.items():
             with self.subTest(url=url):
