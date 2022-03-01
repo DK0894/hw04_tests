@@ -1,28 +1,35 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
 {% block title %}
   {{ group.title }}
 {% endblock %}
 {% block content %}
-<!-- класс py-5 создает отступы сверху и снизу блока -->
-<div class="container py-5">
-  <h1>{{ group.title }}</h1>
-  <p>{{ group.description }}</p>
-  <article>
-    {% for post in page_obj %}
-      <ul>
-        <li>
-          Автор: <a href="{% url 'posts:profile' post.author %}">
-          {{ post.author.get_full_name|default:post.author }}</a>
-        </li>
-        <li>
-          Дата публикации: {{ post.pub_date|date:"d E Y" }}
-        </li>
-      </ul>
-      <!-- linebreaksbr разбивает содержимое text на абзацы -->
-      {% include 'includes/post_text.html' %}
-      {% if not forloop.last %}<hr>{% endif %}
-    {% endfor %}
-    {% include 'includes/paginator.html' %}
-  </article>
-</div>
+  <!-- класс py-5 создает отступы сверху и снизу блока -->
+  <div class="container py-5">
+    <h1>{{ group.title }}</h1>
+    <p>{{ group.description }}</p>
+    <article>
+      {% for post in page_obj %}
+        <ul>
+          <li>
+            Автор: <a href="{% url 'posts:profile' post.author %}">
+            {{ post.author.get_full_name|default:post.author }}</a>
+          </li>
+          <li>
+            Дата публикации: {{ post.pub_date|date:"d E Y" }}
+          </li>
+        </ul>
+        <!-- thumbnail проверяет, загружена ли картинка -->
+        {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+          <img class="card-img my-2" src="{{ im.url }}">
+        {% endthumbnail %}
+        <p>
+          {% include 'includes/post_text.html' %}
+        </p>
+        {% if not forloop.last %}
+          <hr>{% endif %}
+      {% endfor %}
+      {% include 'includes/paginator.html' %}
+    </article>
+  </div>
 {% endblock %}

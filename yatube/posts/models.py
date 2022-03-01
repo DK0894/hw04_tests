@@ -37,6 +37,11 @@ class Post(models.Model):
         related_name='posts',
         verbose_name='Автор'
     )
+    image = models.ImageField(
+        'Картинка',
+        upload_to='posts/',
+        blank=True
+    )
 
     class Meta:
         ordering = ['-pub_date']

@@ -26,13 +26,12 @@ class UserModelTest(TestCase):
 
     def test_models_correct_object_names_post(self):
         """Проверяем, что у моделей корректно работает __str__."""
-        post = self.post
-        expected_object_name = post.text
-        self.assertEqual(expected_object_name, str(post))
+        expected_object_name = self.post.text
+        self.assertEqual(expected_object_name, str(self.post))
 
     def test_models_correct_object_names_group(self):
         """Проверяем, что у моделей корректно работает __str__."""
-        group = UserModelTest.group
+        group = self.group
         expected_object_name = group.title
         self.assertEqual(expected_object_name, str(group))
 

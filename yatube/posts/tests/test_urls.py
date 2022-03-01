@@ -17,16 +17,14 @@ class UserURLTest(TestCase):
             slug='test_slug',
             description='Тестовое описание',
         )
-
-    def setUp(self):
         # Создаем неавторизованный пользователя
-        self.guest_client = Client()
+        cls.guest_client = Client()
         # Создаем авторизованного пользователя
-        self.user = User.objects.create_user(username='Test_username')
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-        self.post = Post.objects.create(
-            author=self.user,
+        cls.user = User.objects.create_user(username='Test_username')
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.post = Post.objects.create(
+            author=cls.user,
             text='test_text',
         )
 

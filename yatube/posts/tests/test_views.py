@@ -18,21 +18,16 @@ class UserViewTest(TestCase):
             slug='test_slug',
             description='test_description',
         )
-        cls.test_user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username='Test_username')
         cls.post = Post.objects.create(
             text='test_text',
             author=User.objects.get(username='Test_username'),
-            group=UserViewTest.group
+            group=cls.group
         )
-
-    def setUp(self):
-        # Создаем неавторизованный пользователя
-        self.guest_client = Client()
-        # Создаем авторизованного пользователя
-        self.user = self.test_user
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        cls.guest_client = Client()
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""

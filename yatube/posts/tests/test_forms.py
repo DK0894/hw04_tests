@@ -17,21 +17,18 @@ class UserFormCreateTest(TestCase):
             slug='test_slug',
             description='test_description',
         )
-        cls.test_user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username='Test_username')
         cls.post = Post.objects.create(
             text='test_text',
             author=User.objects.get(username='Test_username'),
             group=UserFormCreateTest.group
         )
-
-    def setUp(self):
         # Создаем неавторизованный пользователя
-        self.guest_client = Client()
+        cls.guest_client = Client()
         # Создаем авторизованного пользователя
-        self.user = self.test_user
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
 
     def test_create_post(self):
         """При отправке валидной формы со страницы создания поста
