@@ -8,7 +8,12 @@ SECRET_KEY = 'bckxf+=g%)jf&d^2&c8xduda++$wm%@!i4lc77^===+df&y+e9'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'testserver',
+]
 
 INSTALLED_APPS = [
     'posts.apps.PostsConfig',
@@ -99,3 +104,5 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 # указываем директорию, в которую будут складываться файлы писем
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
+CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
