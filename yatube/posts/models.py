@@ -4,6 +4,18 @@ from django.db import models
 User = get_user_model()
 
 
+class CreatedModel(models.Model):
+    """Абстрактная модель. Добавляет дату создания."""
+    created = models.DateTimeField(
+        'Дата создания',
+        auto_now_add=True
+    )
+
+    class Meta:
+        # Это абстрактная модель:
+        abstract = True
+
+
 class Group(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
@@ -50,7 +62,7 @@ class Post(models.Model):
         return self.text
 
 
-class Comment(models.Model):
+class Comment(CreatedModel):
     post = models.ForeignKey(
         Post,
         blank=True,
