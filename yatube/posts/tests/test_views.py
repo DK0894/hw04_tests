@@ -1,10 +1,11 @@
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..models import Group, Post
+from ..models import Comment, Group, Post
 
 User = get_user_model()
 
@@ -13,6 +14,19 @@ class UserViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         cls.group = Group.objects.create(
             title='test_group',
             slug='test_slug',
@@ -23,7 +37,8 @@ class UserViewTest(TestCase):
         cls.post = Post.objects.create(
             text='test_text',
             author=User.objects.get(username='Test_username'),
-            group=cls.group
+            group=cls.group,
+            image=uploaded,
         )
         cls.guest_client = Client()
         cls.authorized_client = Client()
@@ -51,48 +66,65 @@ class UserViewTest(TestCase):
 
     def test_main_page_correct_context(self):
         """Проверка словаря context на странице main_page."""
+
         response = self.authorized_client.get(reverse('posts:main_page'))
         first_object = response.context['page_obj'][0]
-        post_objects = {
-            'Test_username': f'{first_object.author.username}',
-            'test_text': f'{first_object.text}',
+        test_objects = {
+            self.post.author.username: first_object.author.username,
+            self.post.text: first_object.text,
+            self.post.image: first_object.image,
         }
-        for test_obj, obj in post_objects.items():
-            with self.subTest(obj=obj):
-                self.assertEqual(test_obj, obj)
+        for obj, expected in test_objects.items():
+            with self.subTest(expected=expected):
+                self.assertEqual(obj, expected)
 
     def test_group_list_page_correct_context(self):
         """Проверка словаря context на странице group_list."""
         response = self.authorized_client.get(reverse(
             'posts:group_list', args={self.group.slug})
         )
-        post = response.context['page_obj'][0]
-        group = response.context['group']
-        self.assertEqual(group.title, 'test_group')
-        self.assertEqual(group.description, 'test_description')
-        self.assertEqual(group.slug, 'test_slug')
-        self.assertEqual(post.text, 'test_text')
+        post_obj = response.context['page_obj'][0]
+        group_obj = response.context['group']
+        test_objects = {
+            self.group.title: group_obj.title,
+            self.group.description: group_obj.description,
+            self.group.slug: group_obj.slug,
+            self.post.text: post_obj.text,
+            self.post.image: post_obj.image,
+        }
+        for obj, expected in test_objects.items():
+            with self.subTest(expected=expected):
+                self.assertEqual(obj, expected)
 
     def test_profile_page_correct_context(self):
         """Проверка словаря context на странице profile."""
         response = self.authorized_client.get(reverse(
             'posts:profile', args={self.post.author.username})
         )
-        post = response.context['page_obj'][0]
-        post_text = post.text
-        post_author = post.author
-        self.assertEqual(post_author.username, 'Test_username')
-        self.assertEqual(post_text, 'test_text')
-        self.assertIn(post, response.context.get('page_obj').object_list)
+        post_obj = response.context['page_obj'][0]
+        test_objects = {
+            self.post.text: post_obj.text,
+            self.post.author.username: post_obj.author.username,
+            self.post.image: post_obj.image,
+        }
+        for obj, expected in test_objects.items():
+            with self.subTest(expected=expected):
+                self.assertEqual(obj, expected)
 
     def test_post_detail_correct_context(self):
         """Проверка отображения поста на странцие post_detail."""
         response = self.authorized_client.get(
             reverse('posts:post_detail', args={self.post.pk})
         )
-        post = response.context.get('post')
-        self.assertEqual(post.text, 'test_text')
-        self.assertEqual(post.author.username, 'Test_username')
+        post_obj = response.context.get('post')
+        test_objects = {
+            self.post.text: post_obj.text,
+            self.post.author.username: post_obj.author.username,
+            self.post.image: post_obj.image,
+        }
+        for obj, expected in test_objects.items():
+            with self.subTest(expected=expected):
+                self.assertEqual(obj, expected)
 
     def test_create_post_correct_context(self):
         """Проверка отображения поста на странцие create_post."""
@@ -197,13 +229,22 @@ class UserViewTest(TestCase):
         self.assertNotIn(self.post, obj_2)
 
     def test_post_in_main_page(self):
-        """Проверка, что при создании пост попадает на страницу main_page"""
+        """Проверка, что при создании пост попадает на страницу main_page."""
         response = self.authorized_client.get(reverse('posts:main_page'))
         self.assertIn(self.post, response.context.get('page_obj').object_list)
 
     def test_post_in_profile(self):
-        """Проверка, что при создании пост попадает на страницу profile"""
+        """Проверка, что при создании пост попадает на страницу profile."""
         response = self.authorized_client.get(reverse(
             'posts:profile', args={self.post.author.username})
         )
         self.assertIn(self.post, response.context.get('page_obj').object_list)
+
+    # def test_new_comment_appears_on_the_page(self):
+    #     """Проверка, что после успешной отправки комментарий
+    #     появляется на странице поста
+    #     """
+    #     response = self.authorized_client.get(
+    #         reverse('posts:add_comment', args=self.post.pk)
+    #     )
+

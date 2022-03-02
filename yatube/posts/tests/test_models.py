@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from ..models import Group, Post
+from ..models import Comment, Group, Post
 
 User = get_user_model()
 
@@ -23,17 +23,26 @@ class UserModelTest(TestCase):
             author=User.objects.get(username='Test_username'),
             group=UserModelTest.group
         )
+        cls.comment = Comment.objects.create(
+            text='test_text_text_text',
+            author=User.objects.create_user(username='T1000')
+        )
 
     def test_models_correct_object_names_post(self):
-        """Проверяем, что у моделей корректно работает __str__."""
+        """Проверяем, что у модели Post корректно работает __str__."""
         expected_object_name = self.post.text
         self.assertEqual(expected_object_name, str(self.post))
 
     def test_models_correct_object_names_group(self):
-        """Проверяем, что у моделей корректно работает __str__."""
+        """Проверяем, что у модели Group корректно работает __str__."""
         group = self.group
         expected_object_name = group.title
         self.assertEqual(expected_object_name, str(group))
+
+    def test_models_correct_object_names_comment(self):
+        """Проверяем, что у модели Comment корректно работает __str__."""
+        expected_object_name = self.comment.text
+        self.assertEqual(expected_object_name, str(self.comment))
 
     def test_verbose_name(self):
         """verbose_name в полях совпадает с ожидаемым."""

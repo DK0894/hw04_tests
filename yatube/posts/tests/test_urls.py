@@ -84,3 +84,26 @@ class UserURLTest(TestCase):
             with self.subTest(address=address):
                 response = self.authorized_client.get(address)
                 self.assertTemplateUsed(response, template)
+
+    def test_authorized_client_can_comment_post(self):
+        """Проверка, что только авторизованный пользователь
+        может комментировать пост.
+        """
+        response = self.authorized_client.get(
+            f'/posts/{self.post.pk}/comment/'
+        )
+        self.assertRedirects(
+            response, f'/posts/{self.post.pk}/'
+        )
+
+    def test_not_authorized_client_can_comment_post(self):
+        """Проверка, что не авторизованный пользователь не
+        может комментировать пост.
+        """
+        response = self.client.get(
+            f'/posts/{self.post.pk}/comment/'
+        )
+        print(response)
+        self.assertRedirects(
+            response, f'/auth/login/?next=/posts/{self.post.pk}/comment/'
+        )

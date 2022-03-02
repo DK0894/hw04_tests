@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Group, Post
+from .models import Comment, Group, Post
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -15,5 +15,13 @@ class GroupAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
 
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('text', 'author', 'created', 'post')
+    search_fields = ('author',)
+    list_filter = ('created',)
+    empty_value_display = '-пусто-'
+
+
 admin.site.register(Post, PostAdmin)
 admin.site.register(Group, GroupAdmin)
+admin.site.register(Comment, CommentAdmin)
