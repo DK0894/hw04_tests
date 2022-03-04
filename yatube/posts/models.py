@@ -32,7 +32,8 @@ class Post(models.Model):
     )
     pub_date = models.DateTimeField(
         'Дата публикации',
-        auto_now_add=True
+        auto_now_add=True,
+        db_index=True
     )
     group = models.ForeignKey(
         Group,
@@ -87,3 +88,28 @@ class Comment(CreatedModel):
 
     def __str__(self):
         return self.text
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_followers'
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='not_sub'
+            )
+        ]

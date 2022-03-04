@@ -4,8 +4,9 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.core.cache import cache
 
-from ..models import Comment, Group, Post
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -46,6 +47,7 @@ class UserViewTest(TestCase):
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
+        cache.clear()
         post = self.post
         templates_page_names = {
             reverse('posts:main_page'): 'posts/index.html',
@@ -66,7 +68,7 @@ class UserViewTest(TestCase):
 
     def test_main_page_correct_context(self):
         """Проверка словаря context на странице main_page."""
-
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:main_page'))
         first_object = response.context['page_obj'][0]
         test_objects = {
@@ -77,6 +79,30 @@ class UserViewTest(TestCase):
         for obj, expected in test_objects.items():
             with self.subTest(expected=expected):
                 self.assertEqual(obj, expected)
+
+    def test_main_page_cache(self):
+        """Проверка: объекты страницы main_page кэшируются"""
+        cache.clear()
+        response_one = self.guest_client.get(reverse('posts:main_page'))
+        response_one_obj_content = response_one.content
+        response_one.context['page_obj'][0].delete()
+        form_data = {
+            'text': 'Тестовый пост для проверки кэширования',
+        }
+        self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=form_data,
+            follow=True
+        )
+        response_two = self.guest_client.get(reverse('posts:main_page'))
+        response_two_obj_content = response_two.content
+        self.assertEqual(response_one_obj_content, response_two_obj_content)
+        cache.clear()
+        response_three = self.guest_client.get(reverse('posts:main_page'))
+        response_three_obj_content = response_three.content
+        self.assertNotEqual(
+            response_two_obj_content, response_three_obj_content
+        )
 
     def test_group_list_page_correct_context(self):
         """Проверка словаря context на странице group_list."""
@@ -156,6 +182,7 @@ class UserViewTest(TestCase):
         """Проверка работы пагинатора на первой странице main_page,
         group_list, profile.
         """
+        cache.clear()
         for i in range(1, 15):
             self.post = Post.objects.create(
                 author=self.user,
@@ -230,6 +257,7 @@ class UserViewTest(TestCase):
 
     def test_post_in_main_page(self):
         """Проверка, что при создании пост попадает на страницу main_page."""
+        cache.clear()
         response = self.authorized_client.get(reverse('posts:main_page'))
         self.assertIn(self.post, response.context.get('page_obj').object_list)
 
@@ -240,11 +268,49 @@ class UserViewTest(TestCase):
         )
         self.assertIn(self.post, response.context.get('page_obj').object_list)
 
-    # def test_new_comment_appears_on_the_page(self):
-    #     """Проверка, что после успешной отправки комментарий
-    #     появляется на странице поста
-    #     """
-    #     response = self.authorized_client.get(
-    #         reverse('posts:add_comment', args=self.post.pk)
-    #     )
+    def test_authorized_client_can_follow(self):
+        """Проверка, что авторизованный пользователь может подписываться на
+        других пользователей и удалять их из подписок.
+        """
+        user = User.objects.create_user(username='username_1')
+        authorized_client = Client()
+        authorized_client.force_login(user)
+        response_auth_1 = authorized_client.get(
+            reverse('posts:profile_follow', args={self.post.author.username})
+        )
+        response_auth_2 = authorized_client.get(
+            reverse('posts:profile_unfollow', args={self.post.author.username})
+        )
+        response_not_auth = self.guest_client.get(
+            reverse('posts:profile_follow', args={self.post.author.username})
+        )
+        redirect_auth = reverse(
+            'posts:profile', args={self.post.author.username}
+        )
+        redirect_not_auth = \
+            f'/auth/login/?next=/profile/{self.post.author.username}/follow/'
+        self.assertRedirects(response_auth_1, redirect_auth)
+        self.assertRedirects(response_auth_2, redirect_auth)
+        self.assertRedirects(response_not_auth, redirect_not_auth)
 
+    def test_new_post_is_on_the_follow_index_page(self):
+        """Новая запись пользователя появляется в ленте тех,
+        кто на него подписан и не появляется в ленте тех, кто не подписан.
+        """
+        user_1 = User.objects.create_user(username='username_2')
+        user_2 = User.objects.create_user(username='username_3')
+        authorized_client_1 = Client()
+        authorized_client_2 = Client()
+        authorized_client_1.force_login(user_1)
+        authorized_client_2.force_login(user_2)
+        authorized_client_1.post(
+            reverse('posts:profile_follow', args={self.post.author.username})
+        )
+        response_user_1 = authorized_client_1.get(
+            reverse('posts:follow_index')
+        )
+        response_user_2 = authorized_client_2.get(
+            reverse('posts:follow_index')
+        )
+        self.assertContains(response_user_1, self.post.text)
+        self.assertNotContains(response_user_2, self.post.text)

@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
+from django.core.cache import cache
 
 from ..models import Group, Post
 
@@ -34,8 +35,8 @@ class UserURLTest(TestCase):
         post = self.post
         url_path = {
             '/': HTTPStatus.OK,
-            '/group/test_slug/': HTTPStatus.OK,
-            '/profile/Test_username/': HTTPStatus.OK,
+            f'/group/{self.group.slug}/': HTTPStatus.OK,
+            f'/profile/{self.user.username}/': HTTPStatus.OK,
             f'/posts/{post.pk}/': HTTPStatus.OK,
             '/unexisting_page/': HTTPStatus.NOT_FOUND,
         }
@@ -71,6 +72,7 @@ class UserURLTest(TestCase):
 
     def test_urls_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
+        cache.clear()
         post = self.post
         templates_url_names = {
             '/': 'posts/index.html',
@@ -103,7 +105,6 @@ class UserURLTest(TestCase):
         response = self.client.get(
             f'/posts/{self.post.pk}/comment/'
         )
-        print(response)
         self.assertRedirects(
             response, f'/auth/login/?next=/posts/{self.post.pk}/comment/'
         )
